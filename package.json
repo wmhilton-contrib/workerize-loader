@@ -1,12 +1,11 @@
 {
-  "name": "workerize-loader",
-  "version": "1.0.3",
+  "name": "@wmhilton/workerize-loader",
+  "version": "1.0.4",
   "description": "Automatically move a module into a Web Worker (Webpack loader)",
   "main": "dist/index.js",
   "repository": "developit/workerize-loader",
   "scripts": {
     "build": "microbundle --inline none --format cjs --no-compress src/*.js",
-    "install": "npm run build",
     "prepublishOnly": "npm run build",
     "dev": "karmatic watch --no-headless",
     "test": "npm run build && karmatic",
@@ -37,10 +36,10 @@
     "eslint": "^4.16.0",
     "eslint-config-developit": "^1.1.1",
     "karmatic": "^1.0.5",
+    "microbundle": "^0.4.2",
     "webpack": "^4.14.0"
   },
   "dependencies": {
-    "microbundle": "^0.4.2",
     "loader-utils": "^1.1.0"
   }
 }
