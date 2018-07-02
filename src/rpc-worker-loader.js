@@ -24,6 +24,11 @@ function workerSetup() {
 				});
 		}
 	});
+	postMessage({
+		type: 'RPC', method: '__register_methods__', params: {
+			methods: Object.keys(__webpack_exports__)
+		}
+	});
 	postMessage({ type: 'RPC', method: 'ready' });
 }
 

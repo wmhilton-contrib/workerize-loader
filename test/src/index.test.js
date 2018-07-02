@@ -1,25 +1,34 @@
 import './other';
-import Worker from 'workerize-loader?ready&name=test!./worker';
-import InlineWorker from 'workerize-loader?ready&inline&name=test!./worker';
+import Worker from 'workerize-loader!./worker';
+import inlineWorker from 'workerize-loader!./worker';
 
 describe('worker', () => {
-	let worker;
-
-	it('should be an instance of Worker', () => {
-		worker = new Worker();
-		expect(worker).toEqual(jasmine.any(window.Worker));
+	it('should be thenable', () => {
+		expect(typeof Worker.then).toBe('function');
 	});
 
+	it('should NOT be an instance of Worker', () => {
+		expect(Worker).not.toEqual(jasmine.any(window.Worker));
+	});
+
+	if('should resolve to an Object wrapper', async () => {
+		let worker = await Worker;
+		expect(worker).toEqual(jasmine.any(Object));
+	})
+
 	it('worker.foo()', async () => {
+		let worker = await Worker;
 		expect(await worker.foo()).toBe(1);
 	});
 
 	it('worker.bar()', async () => {
+		let worker = await Worker;
 		let out = await worker.bar('a', 'b');
 		expect(out).toEqual('a [bar:3] b');
 	});
 
 	it('worker.throwError() should pass the Error back to the application context', async () => {
+		let worker = await Worker;
 		try {
 			await worker.throwError();
 		}
@@ -27,34 +36,15 @@ describe('worker', () => {
 			expect(e).toEqual(Error('Error in worker.js'));
 		}
 	});
-
-	it('should fire ready event', done => {
-		let worker = new Worker(),
-			called = false,
-			isDone = false;
-		function fin() {
-			if (isDone) return;
-			isDone = true;
-			expect(called).toEqual(true);
-			done();
-		}
-		worker.addEventListener('ready', () => {
-			called = true;
-			fin();
-		});
-		setTimeout(fin, 300);
-	});
 });
 
 describe('async/await demo', () => {
 	it('remote worker', async () => {
 		let start = Date.now(), elapsed;
 
-		let worker = new Worker();
-		// passing "?ready" sets up this promise for you: (just a wrapper around the "ready" event)
-		await worker.ready;
+		let worker = await Worker;
 		elapsed = Date.now()-start;
-		console.log(`new Worker() [${elapsed}ms]`);
+		console.log(`let worker = await Worker [${elapsed}ms]`);
 		expect(elapsed).toBeLessThan(300);
 
 		let one = await worker.foo();
@@ -74,10 +64,9 @@ describe('async/await demo', () => {
 	it('inline worker', async () => {
 		let start = Date.now(), elapsed;
 
-		let worker = new InlineWorker();
-		await worker.ready;
+		let worker = await inlineWorker;
 		elapsed = Date.now()-start;
-		console.log(`new InlineWorker() [${elapsed}ms]`);
+		console.log(`let worker = await inlineWorker [${elapsed}ms]`);
 		expect(elapsed).toBeLessThan(300);
 
 		start = Date.now();
@@ -94,4 +83,5 @@ describe('async/await demo', () => {
 		expect(two).toEqual('1 [bar:3] 2');
 		expect(elapsed).toBeLessThan(20);
 	});
+
 });
