@@ -4,8 +4,8 @@ function workerSetup() {
 	addEventListener('message', (e) => {
 		let { type, method, id, params } = e.data, f, p;
 		if (type==='RPC' && method) {
-			if ((f = __webpack_exports__[method])) {
-				p = Promise.resolve().then( () => f.apply(__webpack_exports__, params) );
+			if ((f = exports[method])) {
+				p = Promise.resolve().then( () => f.apply(exports, params) );
 			}
 			else {
 				p = Promise.reject('No such method');
@@ -26,7 +26,7 @@ function workerSetup() {
 	});
 	postMessage({
 		type: 'RPC', method: '__register_methods__', params: {
-			methods: Object.keys(__webpack_exports__)
+			methods: Object.keys(exports)
 		}
 	});
 	postMessage({ type: 'RPC', method: 'ready' });
