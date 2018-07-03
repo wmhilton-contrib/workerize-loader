@@ -1,28 +1,28 @@
-# workerize-loader the dynamic import typescript edition
+# workerize-loader - the dynamic import(), typescript-friendly edition
 
 > A webpack loader that moves a module and its dependencies into a Web Worker, automatically reflecting exported functions as asynchronous proxies.
 
-- Bundles a tiny, purpose-built RPC implementation into your app
-- If exported module methods are already async, signature is unchanged
-- Supports synchronous and asynchronous worker functions
+- Has the exact same semantics as dynamic `import()`
+- If the module exports are already async functions, the signature is unchanged
 - Works beautifully with async/await
-- Imported value is instantiable, just a decorated `Worker`
+- Imported value is a Promise that resolves to the worker proxy
+- Currently only supports CommonJS modules that use `exports` as the export object. Will gladly accept a PR to fix it so it works with ES6 exports.
 
 
 ## Install
 
 ```sh
-npm install -D workerize-loader
+npm install -D @wmhilton/workerize-loader
 ```
 
 
-### Usage
+## Usage
 
-**worker.js**:
+**expensive.worker.ts**:
 
-```js
+```ts
 // block for `time` ms, then return the number of loops we could run in that time:
-export function expensive(time) {
+export async function expensive(time: number) {
     let start = Date.now(),
         count = 0
     while (Date.now() - start < time) count++
@@ -30,43 +30,43 @@ export function expensive(time) {
 }
 ```
 
-**index.js**: _(our demo)_
+**index.ts**: _(our demo)_
 
-```js
-import worker from 'workerize-loader!./worker'
+```ts
+// Use dynamic import to get a Promise
+const Worker = import('./expensive.worker')
 
-let instance = worker()  // `new` is optional
-
-instance.expensive(1000).then( count => {
-    console.log(`Ran ${count} loops`)
+Worker.then(async (worker) => {
+	// Async functions send their arguments to the WebWorker and
+	// resolve when the result is received.
+	let count = await worker.expensive(1000)
+	console.log(`Ran ${count} loops`)
 })
 ```
 
-### About [Babel](https://babeljs.io/)
+## Webpack config
 
-If you're using [Babel](https://babeljs.io/) in your build, make sure you disabled commonJS transform. Otherwize, workerize-loader won't be able to retrieve the list of exported function from your worker script :
+I recommend configuring this Webpack loader to match against specific filenames.
+This will enable you to simply name your files a certain way, say ending with `.worker.ts`.
+Test environments like Jest that don't have WebWorkers (but do support dynamic `import()` via Babel) will be able to run the same code without any extra hacks or mocks.
+
 ```js
-{
-    test: /\.js$/,
-    loader: "babel-loader",
-    options: {
-        presets: [
-            [
-                "env",
-                {
-                    modules: false,
-                },
-            ],
-        ]
-    }
+module: {
+	rules: [
+		{
+			test: /\.worker\.(ts|js)$/,
+			loader: require.resolve('@wmhilton/workerize-loader')
+		}
+	]
 }
+
 ```
 
-### Credit
+## Credit
 
-The inner workings here are heavily inspired by [worker-loader](https://github.com/webpack-contrib/worker-loader). It's worth a read!
+This is a fork of [workerize-loader](https://github.com/developit/workerize-loader)
 
 
-### License
+## License
 
 [MIT License](https://oss.ninja/mit/developit) © [Jason Miller](https://jasonformat.com)
